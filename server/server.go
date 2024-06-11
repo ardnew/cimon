@@ -1,4 +1,4 @@
-package cimon
+package server
 
 import (
 	"context"
@@ -14,7 +14,7 @@ type Server[T any] interface {
 	Respond(T) Task
 }
 
-func Serve[T any](ctx context.Context, serv Server[T]) error {
+func Run[T any](ctx context.Context, serv Server[T]) error {
 	ctx, cancel := context.WithCancel(ctx)
 	group, ctx := errgroup.WithContext(ctx)
 	tasks := make(chan Task)
