@@ -5,6 +5,7 @@ import (
 	"net"
 	"strings"
 	"log"
+	"strconv"
 
 	"github.com/pkg/errors"
 
@@ -15,16 +16,50 @@ var (
 	errHaltServerRequest = errors.New("halt server requested")
 )
 
+var DefaultConfig = Config{
+	port: 8080,
+}
+
+type Config struct {
+	Bind string
+	port uint
+	Verbose bool
+}
+
+func (c *Config) Interface() string {
+	c.port = DefaultConfig.port
+	port := strconv.FormatUint(uint64(c.port), 10)
+	addr := strings.TrimSpace(c.Bind)
+	n := strings.LastIndex(addr, ":")
+	if n >= 0 {
+		sub := addr[n+1:]
+		addr = addr[:n]
+		u64, err := strconv.ParseUint(sub, 10, 16)
+		if err == nil {
+			c.port, port = uint(u64), sub
+		}
+	}
+	c.Bind = addr + ":" + port
+	return c.Bind
+}
+
 type Socket struct {
+	Config
 	list net.Listener
 }
 
-func New() server.Server[net.Conn] {
-	return &Socket{}
+func New(config Config, name, version string) server.Server[net.Conn] {
+	log.Println(name, "version", version)
+	return &Socket{ Config: config }
 }
 
-func (s *Socket) Open() (err error) {
-	s.list, err = net.Listen("tcp", ":8080")
+func (s *Socket) Open(ctx context.Context) (err error) {
+	iface := s.Interface()
+	s.list, err = new(net.ListenConfig).Listen(ctx, "tcp", iface)
+	//s.list, err = net.Listen("tcp", iface)
+	if err == nil {
+		log.Printf("ready on %s [%s]", iface, "tcp")
+	}
 	return
 }
 

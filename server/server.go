@@ -9,18 +9,17 @@ import (
 type Task func(context.Context, context.CancelFunc) error
 
 type Server[T any] interface {
-	Open() error
+	Open(context.Context) error
 	Connect() (T, error)
 	Respond(T) Task
 }
 
-func Run[T any](ctx context.Context, serv Server[T]) error {
-	ctx, cancel := context.WithCancel(ctx)
+func Run[T any](ctx context.Context, cancel context.CancelFunc, serv Server[T]) error {
 	group, ctx := errgroup.WithContext(ctx)
 	tasks := make(chan Task)
 	group.Go(func() error {
 		defer close(tasks)
-		err := serv.Open()
+		err := serv.Open(ctx)
 		if err != nil {
 			return err
 		}
