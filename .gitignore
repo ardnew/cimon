@@ -1,0 +1,5 @@
+# editor metadata
+.vscode
+
+# build output (main executable)
+cimon

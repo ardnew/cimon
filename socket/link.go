@@ -9,10 +9,10 @@ import (
 )
 
 type link struct {
-	conn net.Conn
-	host net.Addr
-	read *bufio.Reader
-	errs chan error
+	conn   net.Conn
+	host   net.Addr
+	read   *bufio.Reader
+	errs   chan error
 	closed bool
 }
 
@@ -48,4 +48,3 @@ func (l *link) readLine(ctx context.Context, recv chan<- string) {
 		recv <- str
 	}
 }
-

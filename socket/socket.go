@@ -2,10 +2,10 @@ package socket
 
 import (
 	"context"
-	"net"
-	"strings"
 	"log"
+	"net"
 	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -21,8 +21,8 @@ var DefaultConfig = Config{
 }
 
 type Config struct {
-	Bind string
-	port uint
+	Bind    string
+	port    uint
 	Verbose bool
 }
 
@@ -50,7 +50,7 @@ type Socket struct {
 
 func New(config Config, name, version string) server.Server[net.Conn] {
 	log.Println(name, "version", version)
-	return &Socket{ Config: config }
+	return &Socket{Config: config}
 }
 
 func (s *Socket) Open(ctx context.Context) (err error) {

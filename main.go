@@ -33,7 +33,7 @@ func splitExe() (dir, base string) {
 func main() {
 
 	log.SetPrefix("-·- ")
-	log.SetFlags(log.Lmicroseconds|log.Lmsgprefix)
+	log.SetFlags(log.Lmicroseconds | log.Lmsgprefix)
 
 	_, exeBase := splitExe()
 	fs := flag.NewFlagSet(exeBase, flag.ExitOnError)
