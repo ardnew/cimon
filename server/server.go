@@ -3,15 +3,16 @@ package server
 import (
 	"context"
 
+	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 )
 
 type Task func(context.Context, context.CancelFunc) error
 
 type Server[T any] interface {
-	Open(context.Context) error
-	Connect() (T, error)
-	Respond(T) Task
+	Open(ctx context.Context) error
+	Connect(ctx context.Context, clients chan<- T) error
+	Respond(ctx context.Context, client T) Task
 }
 
 func Run[T any](ctx context.Context, cancel context.CancelFunc, serv Server[T]) error {
@@ -21,24 +22,22 @@ func Run[T any](ctx context.Context, cancel context.CancelFunc, serv Server[T]) 
 		defer close(tasks)
 		err := serv.Open(ctx)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		cerr := make(chan error)
 		defer close(cerr)
 		for {
 			next := make(chan T)
 			go func(serv Server[T], next chan<- T, cerr chan<- error) {
-				defer close(next)
-				con, err := serv.Connect()
+				err := serv.Connect(ctx, next)
 				if err != nil {
 					cerr <- err
 				}
-				next <- con
 			}(serv, next, cerr)
 			select {
 			case conn := <-next:
 				select {
-				case tasks <- serv.Respond(conn):
+				case tasks <- serv.Respond(ctx, conn):
 				case <-ctx.Done():
 					return nil
 				}
@@ -47,11 +46,11 @@ func Run[T any](ctx context.Context, cancel context.CancelFunc, serv Server[T]) 
 			case <-ctx.Done():
 				return nil
 			}
-
 		}
 	})
 	for task := range tasks {
+		task := task //nolint:copyloopvar
 		group.Go(func() error { return task(ctx, cancel) })
 	}
-	return group.Wait()
+	return errors.WithStack(group.Wait())
 }

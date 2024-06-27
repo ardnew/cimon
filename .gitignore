@@ -3,3 +3,6 @@
 
 # build output (main executable)
 cimon
+
+# debug builds (managed by dlv)
+__debug_bin[0-9]*
